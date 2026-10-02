@@ -400,22 +400,25 @@ def analyze_dish(client: OpenAI, image=None, description="") -> dict:
             "image_url": {"url": f"data:image/jpeg;base64,{encoded}"}
         })
 
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[{"role": "user", "content": content}],
-        response_format={"type": "json_object"},
-        reasoning_effort="minimal",
-        max_completion_tokens=1000,
+   response = client.chat.completions.create(
+    model=MODEL,
+    messages=[{"role": "user", "content": content}],
+    response_format={"type": "json_object"},
+    max_completion_tokens=4000,
+)
+
+   choice = response.choices[0]
+raw = (choice.message.content or "").strip()
+
+if not raw:
+    raise ValueError(
+        f"Resposta vazia. Motivo: {choice.finish_reason}. "
+        f"Tokens utilizados: {response.usage.completion_tokens if response.usage else 'não informado'}"
     )
 
-    choice = response.choices[0]
-    raw = (choice.message.content or "").strip()
+raw = raw.replace("```json", "").replace("```", "").strip()
 
-    if not raw:
-        raise ValueError("A API retornou uma resposta vazia. Tente novamente.")
-
-    raw = raw.replace("```json", "").replace("```", "").strip()
-    return normalize_result(json.loads(raw))
+return normalize_result(json.loads(raw))
 
 
 # ----------------------------
